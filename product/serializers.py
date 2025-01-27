@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from rest_framework.fields import CharField
 from .models import Product, Category, Customer, Cart, CartItem, Order, OrderItem
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -7,6 +8,8 @@ class CategorySerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class ProductSerializer(serializers.ModelSerializer):
+    image_url = CharField(source='image.url', read_only=True)
+
     class Meta:
         model = Product
         fields = '__all__'
