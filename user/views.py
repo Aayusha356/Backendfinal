@@ -9,6 +9,7 @@ User = get_user_model()
 
 # Register View
 class RegisterView(APIView):
+    serializer_class=RegisterSerializer
     def post(self, request):
         serializer = RegisterSerializer(data=request.data)
         if serializer.is_valid():
@@ -18,25 +19,21 @@ class RegisterView(APIView):
 
 # Login View
 class LoginView(APIView):
+    serializer_class=LoginSerializer
     def post(self, request):
         serializer = LoginSerializer(data=request.data)
         if serializer.is_valid():
-            identifier = serializer.validated_data['identifier']
+            email = serializer.validated_data['email']
             password = serializer.validated_data['password']
 
             # Determine if the identifier is an email or phone number
             user = None
-            if '@' in identifier:
+            if '@' in email:
                 try:
-                    user = User.objects.get(email=identifier)
+                    user = User.objects.get(email=email)
                 except User.DoesNotExist:
                     return Response({"error": "Invalid email."}, status=status.HTTP_401_UNAUTHORIZED)
-            else:
-                try:
-                    user = User.objects.get(phone_number=identifier)
-                except User.DoesNotExist:
-                    return Response({"error": "Invalid phone number."}, status=status.HTTP_401_UNAUTHORIZED)
-
+      
             # Authenticate user
             if user and user.check_password(password):
                 refresh = RefreshToken.for_user(user)

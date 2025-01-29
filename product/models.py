@@ -21,22 +21,9 @@ class Product(models.Model):
     image = models.ImageField(upload_to='products/', null=True, blank=True)
     size = models.CharField(max_length=2, choices=SIZE_CHOICES, null=True, blank=True)
     
-    
     def __str__(self):
         return self.name
     
-class Rating(models.Model):
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='ratings')
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)  # Use custom user model
-    score = models.PositiveIntegerField(
-        choices=[(i, f"{i} star{'s' if i > 1 else ''}") for i in range(1, 6)], 
-        default=5
-    )  # Ratings from 1 to 5 stars
-    review = models.TextField(blank=True, null=True)  # Optional review text
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f"{self.score} by {self.user or 'Anonymous'} for {self.product.name}"
 class Customer(models.Model):
     first_name = models.CharField(max_length=50)
     last_name = models.CharField(max_length=50)
