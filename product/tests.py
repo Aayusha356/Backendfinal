@@ -1,5 +1,5 @@
 from django.test import TestCase
-from .models import Category, Product, Customer, Cart, CartItem, Order, OrderItem
+from .models import Category, Product, Customer, Order, OrderItem
 
 class EcommerceTestCase(TestCase):
     def setUp(self):
@@ -23,18 +23,6 @@ class EcommerceTestCase(TestCase):
             last_name="Doe",
             email="jane.doe@example.com",
             phone="9876543210"
-        )
-
-        # Create a cart
-        self.cart = Cart.objects.create(
-            customer=self.customer
-        )
-
-        # Create a cart item
-        self.cart_item = CartItem.objects.create(
-            cart=self.cart,
-            product=self.product,
-            quantity=1
         )
 
         # Create an order
@@ -67,16 +55,7 @@ class EcommerceTestCase(TestCase):
         self.assertEqual(self.customer.last_name, "Doe")
         self.assertEqual(self.customer.email, "jane.doe@example.com")
 
-    def test_cart_creation(self):
-        self.assertEqual(Cart.objects.count(), 1)
-        self.assertEqual(self.cart.customer, self.customer)
-
-    def test_cart_item_creation(self):
-        self.assertEqual(CartItem.objects.count(), 1)
-        self.assertEqual(self.cart_item.cart, self.cart)
-        self.assertEqual(self.cart_item.product, self.product)
-        self.assertEqual(self.cart_item.quantity, 1)
-
+    
     def test_order_creation(self):
         self.assertEqual(Order.objects.count(), 1)
         self.assertEqual(self.order.customer, self.customer)

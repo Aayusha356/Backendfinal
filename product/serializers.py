@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from rest_framework.fields import CharField
-from .models import Product, Category, Customer, Cart, CartItem, Order, OrderItem
+from django.utils import timezone
+from .models import Product, Category, Customer,Order, OrderItem
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
@@ -18,20 +19,6 @@ class ProductSerializer(serializers.ModelSerializer):
 class CustomerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Customer
-        fields = '__all__'
-
-class CartItemSerializer(serializers.ModelSerializer):
-    product = ProductSerializer()
-
-    class Meta:
-        model = CartItem
-        fields = '__all__'
-
-class CartSerializer(serializers.ModelSerializer):
-    items = CartItemSerializer(many=True)
-
-    class Meta:
-        model = Cart
         fields = '__all__'
 
 class OrderItemSerializer(serializers.ModelSerializer):
