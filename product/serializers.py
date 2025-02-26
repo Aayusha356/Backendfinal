@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from rest_framework.fields import CharField
 from django.utils import timezone
-from .models import Product, Category, Customer, Order, OrderItem, PricingPrediction, PricingAdjustment
+from .models import Product, Category,Order, OrderItem, PricingPrediction, PricingAdjustment
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
@@ -23,11 +23,6 @@ class ProductSerializer(serializers.ModelSerializer):
             return obj.current_price / obj.cost_price
         return 0
      
-class CustomerSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Customer
-        fields = '__all__'
-
 class OrderItemSerializer(serializers.ModelSerializer):
     product = ProductSerializer()
 
@@ -36,11 +31,12 @@ class OrderItemSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class OrderSerializer(serializers.ModelSerializer):
-    items = OrderItemSerializer(many=True)
+   items = serializers.JSONField()  # ✅ Items stored as JSON
+   user = serializers.CharField(source='user.username', read_only=True)  # ✅ Replace customer with user
 
-    class Meta:
+   class Meta:
         model = Order
-        fields = '__all__'
+        fields = ['id', 'user', 'created_at', 'total_price', 'items']
 
 class PricingPredictionSerializer(serializers.ModelSerializer):
     class Meta:

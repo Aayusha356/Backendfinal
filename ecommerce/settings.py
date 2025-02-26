@@ -162,6 +162,6 @@ CORS_ALLOWED_ORIGINS = (
 "http://localhost:8000",
 )
 
-CELERY_BROKER_URL = 'pyamqp://guest@localhost:8000//'  # RabbitMQ default URL
+CELERY_BROKER_URL = "amqp://guest:guest@127.0.0.1:5672/"
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'

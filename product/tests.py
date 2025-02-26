@@ -1,5 +1,5 @@
 from django.test import TestCase
-from .models import Category, Product, Customer, Order, OrderItem
+from .models import Category, Product, user, Order, OrderItem
 
 class EcommerceTestCase(TestCase):
     def setUp(self):
@@ -18,7 +18,7 @@ class EcommerceTestCase(TestCase):
         )
 
         # Create a customer
-        self.customer = Customer.objects.create(
+        self.user = user.objects.create(
             first_name="Jane",
             last_name="Doe",
             email="jane.doe@example.com",
@@ -27,7 +27,7 @@ class EcommerceTestCase(TestCase):
 
         # Create an order
         self.order = Order.objects.create(
-            customer=self.customer,
+            user=self.user,
             total_price=1500.00
         )
 
@@ -49,16 +49,16 @@ class EcommerceTestCase(TestCase):
         self.assertEqual(self.product.price, 1500.00)
         self.assertEqual(self.product.category, self.category)
 
-    def test_customer_creation(self):
-        self.assertEqual(Customer.objects.count(), 1)
-        self.assertEqual(self.customer.first_name, "Jane")
-        self.assertEqual(self.customer.last_name, "Doe")
-        self.assertEqual(self.customer.email, "jane.doe@example.com")
+    def test_user_creation(self):
+        self.assertEqual(user.objects.count(), 1)
+        self.assertEqual(self.user.first_name, "Jane")
+        self.assertEqual(self.user.last_name, "Doe")
+        self.assertEqual(self.user.email, "jane.doe@example.com")
 
     
     def test_order_creation(self):
         self.assertEqual(Order.objects.count(), 1)
-        self.assertEqual(self.order.customer, self.customer)
+        self.assertEqual(self.order.user, self.user)
         self.assertEqual(self.order.total_price, 1500.00)
 
     def test_order_item_creation(self):
