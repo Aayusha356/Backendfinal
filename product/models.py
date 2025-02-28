@@ -28,6 +28,13 @@ class Product(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     price_ratio = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     profit_margin = models.FloatField(default=0.0)
+    customer_rating = models.ForeignKey(
+        'ratings.Rating', 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True, 
+        related_name="products"
+    )
 
     def save(self, *args, **kwargs):
         """Ensure current_price is adjusted based on discount percentage."""
@@ -42,27 +49,23 @@ class Product(models.Model):
             # Ensure price ratio is updated
             if self.cost_price > 0.00:
                 self.price_ratio = float(self.current_price) / float(self.cost_price)
-    
+
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return self.name
-      
 
 class Order(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='orders')
     created_at = models.DateTimeField(auto_now_add=True)
     total_price = models.DecimalField(max_digits=10, decimal_places=2)
+    items = models.JSONField(default=list)  # ✅ Storing order items as JSON
 
     def __str__(self):
-        return f"Order #{self.id}"
-     
+        return f"Order #{self.id} - {self.user.username if self.user else 'No User'}"
 
-class OrderItem(models.Model):
-    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    quantity = models.PositiveIntegerField(default=1)
-
-    def __str__(self):
-        return f"{self.quantity} x {self.product.name}"
+    def get_items(self):
+        return self.items  # No need for json.loads as Django handles it
 
 class PricingPrediction(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)

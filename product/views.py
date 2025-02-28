@@ -1,9 +1,10 @@
 from rest_framework.viewsets import ModelViewSet
-from .models import Product, Category,Order, OrderItem, PricingAdjustment, PricingPrediction
+from .models import Product, Category, Order, PricingAdjustment, PricingPrediction
 import pandas as pd
 import joblib
 from ratings.models import Rating
 from django.shortcuts import get_object_or_404
+from django.db.models import Avg
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from sklearn.preprocessing import StandardScaler
@@ -11,18 +12,22 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from .serializers import (
     ProductSerializer, CategorySerializer, 
-    OrderSerializer, OrderItemSerializer, PricingPredictionSerializer, PricingAdjustmentSerializer
+    OrderSerializer, PricingPredictionSerializer, PricingAdjustmentSerializer
 )
+from ratings.serializers import RatingSerializer
 from decimal import Decimal
+from django.conf import settings
+
+User = settings.AUTH_USER_MODEL  # Get the CustomUser model dynamically
 
 # Load trained model & scaler
-MODEL_PATH = r"C:\Users\Dell\Desktop\newecommerfce\minor_project\regression_model\models\ridge_model.pkl"
-SCALER_PATH = r"C:\Users\Dell\Desktop\newecommerfce\minor_project\regression_model\models\ridge_scaler.pkl"
+MODEL_PATH = r"C:/Users/Lenovo/Desktop/Backend3/finalbackend/regression_model/models/ridge_model.pkl"
+SCALER_PATH = r"C:/Users/Lenovo/Desktop/Backend3/finalbackend/regression_model/models/ridge_scaler.pkl"
 
 ridge_model = joblib.load(MODEL_PATH)
 scaler = joblib.load(SCALER_PATH)
 
-FEATURES = ['cost_price', 'current_price', 'Rating', 'discount', 'sales_volume', 'profit_margin', 'price_ratio']
+FEATURES = ['cost_price', 'current_price', 'customer_rating', 'discount', 'sales_volume', 'profit_margin', 'price_ratio']
 
 @api_view(['GET'])
 def predict_price_adjustment(request, product_id):
@@ -31,13 +36,15 @@ def predict_price_adjustment(request, product_id):
         product = get_object_or_404(Product.objects.only(*FEATURES), id=product_id)
         product_data = ProductSerializer(product).data
 
+        # Fetch the rating from the rating app
+        rating = Rating.objects.filter(product=product).aggregate(average_rating=Avg('rating'))['average_rating'] or 0
+        product_data['customer_rating'] = rating
+
         # Prepare input data for the model
         input_data = pd.DataFrame([{
             feature: product_data.get(feature, 0)  # Default to 0 if the feature is missing
             for feature in FEATURES
         }])
-
-        # Handle missing or invalid data gracefully if needed
 
         # Scale input data for model prediction
         input_scaled = scaler.transform(input_data)
@@ -137,7 +144,7 @@ def predict_price_adjustment_bulk(request):
     except Exception as e:
         return Response({"error": str(e)}, status=500)
 
-#views
+# Views
 class ProductViewSet(ModelViewSet):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
@@ -149,11 +156,11 @@ class CategoryViewSet(ModelViewSet):
 class OrderViewSet(ModelViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
-    #permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
     def create(self, request, *args, **kwargs):
         print("Incoming request data:", request.data) 
-        # ✅ Fetch the logged-in user instead of Customer
+        # Fetch the logged-in user instead of Customer
         user = request.user
 
         # Get the items and total price from the request data
@@ -162,7 +169,6 @@ class OrderViewSet(ModelViewSet):
             return Response({"detail": "Items are required."}, status=status.HTTP_400_BAD_REQUEST)
 
         # Calculate total price and handle type conversions for each item
-        id
         total_price_value = 0
         item_data = []
 
@@ -189,18 +195,16 @@ class OrderViewSet(ModelViewSet):
             except Product.DoesNotExist:
                 return Response({"detail": f"Product with ID {item['id']} does not exist."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # ✅ Create the order with the logged-in user instead of Customer
+        # Create the order with the logged-in user instead of Customer
         order = Order.objects.create(
             user=user,
             total_price=total_price_value,
+            items=item_data
         )
-        order.items = item_data  # Assign items after creation
-        order.save()
 
         # Serialize the created order and return the response
         serializer = OrderSerializer(order)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
-
 
 class PricingPredictionViewSet(ModelViewSet):
     queryset = PricingPrediction.objects.all()
